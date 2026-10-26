@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 
+.catalog-picker { display: grid; gap: 6px; margin: 15px 0 7px; color: #789597; font: 9px 'DM Mono'; }.catalog-picker select { width: 100%; padding: 8px; border: 1px solid rgba(98,216,189,.2); border-radius: 6px; color: #c6d9d5; background: #102a31; font: 10px 'DM Mono'; }.catalog-picker small { color: #668487; line-height: 1.35; }.catalog-drag, .catalog-add { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 6px; margin-top: 5px; border-radius: 5px; font-size: 9px; }.catalog-drag { border: 1px dashed rgba(98,216,189,.32); color: var(--mint); background: rgba(98,216,189,.04); cursor: grab; }.catalog-add { color: #0a211f; background: var(--mint); }.catalog-add:hover { background: #8de8d2; }.palette-item[draggable="true"] { cursor: grab; }.palette-item[draggable="true"]:active, .catalog-drag:active { cursor: grabbing; }
+
 :root { font-family: 'Manrope', sans-serif; color: #e9f1f0; background: #071419; font-synthesis: none; --bg: #071419; --panel: #0c2027; --panel-2: #102a32; --line: rgba(164, 213, 207, .13); --text: #e9f1f0; --muted: #8ca8aa; --mint: #62d8bd; --coral: #ef8b79; }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 1060px; background: var(--bg); }
