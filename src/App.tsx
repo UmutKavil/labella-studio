@@ -31,7 +31,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import type { CableType, Device, EventItem, Link, Pdu } from "./core/types";
+import type { CableType, Device, EventItem, Link, Pdu, ServerServicesState } from "./core/types";
 import { cableLabels, validateCable } from "./core/cables";
 import { catalogCategories, deviceCatalog } from "./core/device-catalog";
 import { initialServices } from "./core/services";
@@ -41,6 +41,12 @@ import PduInspector from "./components/pdu-inspector/PduInspector";
 
 type WorkspaceMode = "logical" | "physical";
 type RunMode = "realtime" | "simulation";
+type DesktopWorkspace = { id: string; name: string; detail: string };
+const initialDesktops: DesktopWorkspace[] = [
+  { id: "campus", name: "Campus 01", detail: "Main laboratory" },
+  { id: "branch", name: "Branch Lab", detail: "Remote office" },
+  { id: "iot", name: "IoT Bench", detail: "Sensors & devices" },
+];
 const palette = [
   {
     kind: "router" as const,
@@ -209,36 +215,106 @@ const initialEvents: EventItem[] = [
   },
 ];
 
+type DesktopSnapshot = {
+  devices: Device[];
+  links: Link[];
+  events: EventItem[];
+  services: ServerServicesState;
+  selectedId: string;
+  workspace: WorkspaceMode;
+  runMode: RunMode;
+  zoom: number;
+  selectedModel: string;
+};
+
+const cloneServices = (services: ServerServicesState): ServerServicesState => JSON.parse(JSON.stringify(services)) as ServerServicesState;
+const createDesktopSnapshot = (): DesktopSnapshot => ({
+  devices: initialDevices.map((device) => ({ ...device })),
+  links: initialLinks.map((link) => ({ ...link })),
+  events: initialEvents.map((event) => ({ ...event })),
+  services: cloneServices(initialServices),
+  selectedId: "sw1",
+  workspace: "logical",
+  runMode: "realtime",
+  zoom: 100,
+  selectedModel: "ISR 4331",
+});
+const createEmptyDesktopSnapshot = (): DesktopSnapshot => ({
+  ...createDesktopSnapshot(),
+  devices: [],
+  links: [],
+  events: [],
+  selectedId: "",
+});
+const defaultDesktopSnapshot = createDesktopSnapshot();
+const initialDesktopSnapshots: Record<string, DesktopSnapshot> = Object.fromEntries(
+  initialDesktops.map((desktop) => [desktop.id, createDesktopSnapshot()]),
+);
+
 function IconFor({ kind, size = 22 }: { kind: Device["kind"]; size?: number }) {
   const Icon = palette.find((item) => item.kind === kind)?.icon ?? CircleDot;
   return <Icon size={size} strokeWidth={1.7} />;
 }
 
 export default function App() {
-  const [devices, setDevices] = useState(initialDevices),
-    [links, setLinks] = useState(initialLinks),
-    [events, setEvents] = useState(initialEvents);
-  const [workspace, setWorkspace] = useState<WorkspaceMode>("logical"),
-    [runMode, setRunMode] = useState<RunMode>("realtime"),
-    [selectedId, setSelectedId] = useState("sw1"),
+  const [devices, setDevices] = useState(defaultDesktopSnapshot.devices),
+    [links, setLinks] = useState(defaultDesktopSnapshot.links),
+    [events, setEvents] = useState(defaultDesktopSnapshot.events);
+  const [workspace, setWorkspace] = useState<WorkspaceMode>(defaultDesktopSnapshot.workspace),
+    [runMode, setRunMode] = useState<RunMode>(defaultDesktopSnapshot.runMode),
+    [selectedId, setSelectedId] = useState(defaultDesktopSnapshot.selectedId),
     [activeTool, setActiveTool] = useState<"select" | "cable" | "inspect">(
       "select",
     ),
     [linkStart, setLinkStart] = useState<string | null>(null),
-    [zoom, setZoom] = useState(100),
+    [zoom, setZoom] = useState(defaultDesktopSnapshot.zoom),
     [rightPanel, setRightPanel] = useState<"events" | "inspect">("events"),
     [cableType, setCableType] = useState<CableType>("auto"),
     [windows, setWindows] = useState<string[]>([]),
     [pdu, setPdu] = useState<Pdu | null>(null),
-    [services, setServices] = useState(initialServices),
-    [selectedModel, setSelectedModel] = useState("ISR 4331");
+    [services, setServices] = useState(defaultDesktopSnapshot.services),
+    [selectedModel, setSelectedModel] = useState(defaultDesktopSnapshot.selectedModel),
+    [desktops, setDesktops] = useState(initialDesktops),
+    [activeDesktopId, setActiveDesktopId] = useState("campus");
   const dragRef = useRef<{
     id: string;
     offsetX: number;
     offsetY: number;
   } | null>(null);
+  const desktopSnapshotsRef = useRef(initialDesktopSnapshots);
   const selected =
     devices.find((device) => device.id === selectedId) ?? devices[0];
+  const activeDesktop = desktops.find((desktop) => desktop.id === activeDesktopId) ?? desktops[0];
+  const saveActiveDesktop = () => {
+    desktopSnapshotsRef.current[activeDesktopId] = {
+      devices,
+      links,
+      events,
+      services,
+      selectedId,
+      workspace,
+      runMode,
+      zoom,
+      selectedModel,
+    };
+  };
+  const switchDesktop = (desktopId: string) => {
+    if (desktopId === activeDesktopId) return;
+    saveActiveDesktop();
+    const next = desktopSnapshotsRef.current[desktopId] ?? createEmptyDesktopSnapshot();
+    setDevices(next.devices);
+    setLinks(next.links);
+    setEvents(next.events);
+    setServices(cloneServices(next.services));
+    setSelectedId(next.selectedId);
+    setWorkspace(next.workspace);
+    setRunMode(next.runMode);
+    setZoom(next.zoom);
+    setSelectedModel(next.selectedModel);
+    setWindows([]);
+    setPdu(null);
+    setActiveDesktopId(desktopId);
+  };
   const stats = useMemo(
     () => ({
       devices: devices.length,
@@ -446,11 +522,46 @@ export default function App() {
       items.map((item) => (item.id === next.id ? next : item)),
     );
   const loadSample = () => {
-    setDevices(initialDevices);
-    setLinks(initialLinks);
-    setEvents(initialEvents);
+    const sample = createDesktopSnapshot();
+    desktopSnapshotsRef.current[activeDesktopId] = sample;
+    setDevices(sample.devices);
+    setLinks(sample.links);
+    setEvents(sample.events);
+    setServices(cloneServices(sample.services));
+    setSelectedId(sample.selectedId);
+    setWorkspace(sample.workspace);
+    setRunMode(sample.runMode);
+    setZoom(sample.zoom);
+    setSelectedModel(sample.selectedModel);
     setWindows([]);
-    setSelectedId("sw1");
+    setPdu(null);
+  };
+  const addDesktop = () => {
+    const index = desktops.length + 1;
+    const desktop = { id: `desktop-${index}`, name: `Desktop ${String(index).padStart(2, "0")}`, detail: "New workspace" };
+    desktopSnapshotsRef.current[desktop.id] = createEmptyDesktopSnapshot();
+    setDesktops((items) => [...items, desktop]);
+    switchDesktop(desktop.id);
+  };
+  const renameDesktop = (desktop: DesktopWorkspace) => {
+    const name = window.prompt("Masaüstü adını değiştir", desktop.name)?.trim();
+    if (!name || name === desktop.name) return;
+    setDesktops((items) => items.map((item) => item.id === desktop.id ? { ...item, name } : item));
+  };
+  const deleteDesktop = (desktop: DesktopWorkspace) => {
+    if (desktops.length === 1) {
+      window.alert("En az bir masaüstü kalmalıdır.");
+      return;
+    }
+    if (!window.confirm(`"${desktop.name}" masaüstünü silmek istediğinize emin misiniz? Bu masaüstündeki cihazlar ve ayarlar silinecek.`)) return;
+    saveActiveDesktop();
+    const remaining = desktops.filter((item) => item.id !== desktop.id);
+    delete desktopSnapshotsRef.current[desktop.id];
+    setDesktops(remaining);
+    if (desktop.id === activeDesktopId) {
+      const next = remaining[Math.max(0, remaining.findIndex((item) => item.id === activeDesktopId) - 1)] ?? remaining[0];
+      switchDesktop(next.id);
+    }
   };
   return (
     <main className="app-shell">
@@ -489,8 +600,27 @@ export default function App() {
         </div>
       </header>
       <section className="workspace-header">
+        <nav className="desktop-tabs" aria-label="Desktop workspaces">
+          {desktops.map((desktop) => (
+            <div className="desktop-tab" key={desktop.id}>
+              <button
+                className={`desktop-tab-main ${activeDesktopId === desktop.id ? "active" : ""}`}
+                onClick={() => switchDesktop(desktop.id)}
+                onDoubleClick={() => renameDesktop(desktop)}
+                title={`${desktop.detail} · çift tıklayarak yeniden adlandır`}
+              >
+                <span className="desktop-tab-dot" />
+                {desktop.name}
+              </button>
+              {desktops.length > 1 && <button className="desktop-tab-delete" onClick={() => deleteDesktop(desktop)} title={`${desktop.name} masaüstünü sil`} aria-label={`${desktop.name} masaüstünü sil`}><Trash2 size={12} /></button>}
+            </div>
+          ))}
+          <button className="desktop-tab-add" onClick={addDesktop} title="Add desktop workspace" aria-label="Add desktop workspace">
+            <Plus size={15} />
+          </button>
+        </nav>
         <div>
-          <p className="eyebrow">NETWORK LABORATORY / CAMPUS 01</p>
+          <p className="eyebrow">NETWORK LABORATORY / {activeDesktop.name.toUpperCase()}</p>
           <h1>
             {workspace === "logical"
               ? "Logical topology"

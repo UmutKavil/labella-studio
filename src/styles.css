@@ -1,5 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 
+.desktop-tab { display: flex; align-items: center; border-radius: 6px; }
+.desktop-tab-main { border-radius: 6px 0 0 6px !important; }
+.desktop-tab-delete { width: 26px !important; padding: 0 !important; border-radius: 0 6px 6px 0 !important; color: #b9857a !important; opacity: .65; }
+.desktop-tab-delete:hover { color: #f0b0a1 !important; background: #4a2d2b !important; opacity: 1; }
+
+.desktop-tabs { display: flex; align-items: center; gap: 4px; margin-right: auto; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.025); }
+.desktop-tabs button { min-height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 11px; border-radius: 6px; color: var(--muted); background: transparent; font: 10px 'DM Mono'; transition: color 160ms ease-out, background 160ms ease-out; }
+.desktop-tabs button:hover { color: var(--text); background: rgba(255,255,255,.06); }
+.desktop-tabs button.active { color: var(--mint); background: #153839; }
+.desktop-tab-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.desktop-tab-add { width: 34px; justify-content: center; padding: 0 !important; color: var(--mint) !important; }
+.desktop-tab-add:hover { background: #153839 !important; }
 .catalog-picker { display: grid; gap: 6px; margin: 15px 0 7px; color: #789597; font: 9px 'DM Mono'; }.catalog-picker select { width: 100%; padding: 8px; border: 1px solid rgba(98,216,189,.2); border-radius: 6px; color: #c6d9d5; background: #102a31; font: 10px 'DM Mono'; }.catalog-picker small { color: #668487; line-height: 1.35; }.catalog-drag, .catalog-add { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 6px; margin-top: 5px; border-radius: 5px; font-size: 9px; }.catalog-drag { border: 1px dashed rgba(98,216,189,.32); color: var(--mint); background: rgba(98,216,189,.04); cursor: grab; }.catalog-add { color: #0a211f; background: var(--mint); }.catalog-add:hover { background: #8de8d2; }.palette-item[draggable="true"] { cursor: grab; }.palette-item[draggable="true"]:active, .catalog-drag:active { cursor: grabbing; }
 
 :root { font-family: 'Manrope', sans-serif; color: #e9f1f0; background: #071419; font-synthesis: none; --bg: #071419; --panel: #0c2027; --panel-2: #102a32; --line: rgba(164, 213, 207, .13); --text: #e9f1f0; --muted: #8ca8aa; --mint: #62d8bd; --coral: #ef8b79; }
